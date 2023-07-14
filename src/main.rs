@@ -69,7 +69,7 @@ fn scan_dir(dir: &Path, list: &Path) -> Vec<String> {
                 a.expect("The files path in original directory cannot the read!")
                     .path()
             })
-            .filter(|a| a.display().to_string().ends_with(".txt"));
+            .filter(|a| a.display().to_string().ends_with(".ARW"));
         for entry in entries {
             let file_result = entry.display();
             let file_path = file_result.to_string();
@@ -78,7 +78,6 @@ fn scan_dir(dir: &Path, list: &Path) -> Vec<String> {
             if allowed_files.contains(&file_sequence.as_str()) {
                 result.insert(result.len(), file_name);
             } else {
-                println!("Not allow {}", &file_sequence);
             }
         }
     };
@@ -113,7 +112,7 @@ fn read_file(path: &Path) -> String {
 }
 
 fn format_file_name(name: &String) -> String {
-    let pattern = r".*_(\d+)[^\d]\w+";
+    let pattern = r".*_(\d+)\.\w+|(\d+)\.\w+";
     let re = Regex::new(pattern);
 
     let re = match re {
@@ -122,9 +121,10 @@ fn format_file_name(name: &String) -> String {
     };
 
     if let Some(captures) = re.captures(&name) {
-        if let Some(sequence_number) = captures.get(1) {
-            let sequence_number = sequence_number.as_str().parse::<u32>().unwrap();
-            return sequence_number.to_string();
+        if let Some(sequence_number) = captures.get(1).or(captures.get(2)) {
+            let sequence_number_str = sequence_number.as_str();
+            let sequence_number = u64::from_str_radix(sequence_number_str, 10).unwrap();
+            return sequence_number.to_string() // Output: 321
         }
     } else {
         return String::new()
