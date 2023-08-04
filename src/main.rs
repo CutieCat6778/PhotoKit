@@ -1,7 +1,7 @@
 use clap::{arg, Command};
 use regex::Regex;
 use std::collections::HashSet;
-use std::fs;
+use std::{fs, string};
 use std::path::Path;
 
 // Initializing the cli application
@@ -12,6 +12,7 @@ fn cli() -> clap::Command {
         .arg_required_else_help(true)
         .arg(arg!(from: -f --from <FROM> "The path of the original folder."))
         .arg(arg!(to: -t --to <TO> "The path of the target folder."))
+        .arg(arg!(to: -e --ext <EXT> "The extension name of the files"))
         .arg(arg!(list: -l --list <LIST> "The path of the copy list."))
 }
 
@@ -26,6 +27,9 @@ fn main() {
         .get_one::<String>("to")
         .expect("The <TO> argument cannot be processed!")
         .to_string();
+    let ext = matches
+        .get_one::<String>("ext")
+        .expect("The <EXT> argument cannot be processed!");
     let list = matches
         .get_one::<String>("list")
         .expect("The <LIST> argument cannot be processed!");
@@ -45,7 +49,7 @@ fn main() {
     let path = Path::new(&from);
     let list_path = Path::new(list);
     // Scan the given dir for files
-    let path_list = scan_dir(path, list_path);
+    let path_list = scan_dir(path, list_path, ext);
     copy_files(path_list, to, from).expect("Failed to copy files")
 }
 
@@ -55,7 +59,7 @@ fn main() {
     Output: List of file path
     Function: Scan for list file and let user chose what to copy
 */
-fn scan_dir(dir: &Path, list: &Path) -> Vec<String> {
+fn scan_dir(dir: &Path, list: &Path, ext: &String) -> Vec<String> {
     let mut result: Vec<String> = vec![String::new(); 0];
 
     let list_file = read_file(list);
@@ -69,7 +73,7 @@ fn scan_dir(dir: &Path, list: &Path) -> Vec<String> {
                 a.expect("The files path in original directory cannot the read!")
                     .path()
             })
-            .filter(|a| a.display().to_string().ends_with(".ARW"));
+            .filter(|a| a.display().to_string().ends_with(ext));
         for entry in entries {
             let file_result = entry.display();
             let file_path = file_result.to_string();
